@@ -1,0 +1,12 @@
+plaintext
+Здравствуйте!
+
+Ваш сбор успешно создан:
+
+Название: {{ collect.title }}
+Повод: {{ collect.occasion }}
+Описание: {{ collect.description }}
+Целевая сумма: {{ collect.target_amount }} руб.
+Дата окончания: {{ collect.end_date }}
+
+Спасибо за использование нашей платформы!

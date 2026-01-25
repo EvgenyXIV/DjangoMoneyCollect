@@ -1,0 +1,14 @@
+plaintext
+Здравствуйте!
+
+Данные платежа от {{ payment.created_at }} обновлены:
+
+Сбор: {{ payment.collect.title }}
+Автор сбора: {{ payment.collect.author }}
+Сумма платежа: {{ payment.amount }} руб.
+Дата платежа: {{ payment.created_at }}
+Комментарий: {{ payment.comment }}
+Текущая собранная сумма: {{ payment.collect.collected_amount }} руб.
+Целевая сумма: {{ payment.collect.target_amount }} руб.
+
+Благодарим вас за участие в сборе средств!

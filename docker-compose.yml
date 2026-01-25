@@ -1,0 +1,80 @@
+services:
+
+  
+  redis:
+    image: redis:7.4
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: ./money_collect  # Адрес относительно текущей папки на диске, по которому находится Dockerfile.
+                            # Образ сервиса web будет создан в workdir контейнера(WORKDIR /usr/src/money_collect/)
+    # build: 
+      # context: ./money_collect          # папка проекта, в которой находится Dockerfile
+      # dockerfile: ./Dockerfile_cross    # по умолчанию в папке проекта, или указать путь
+    # command: bash /entrypoint.sh        # команда на запуск сервиса из entrypoint.sh, если там эта команда прописана
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:                              # Синхронизируемые тома на диске и в контейнере для этого сервиса
+      - ./money_collect/:/usr/src/money_collect
+    ports:                                # Сопоставление портов хоста и контейнера
+      - 8000:8000
+    env_file:                             # переменные окружения из файла ".env.dev"
+      - ./.env.dev
+    
+    environment:                        # переменные окружения в явном виде
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      # DATABASE_URL: postgresql://postgres:postgres@db:5432/mydatabase
+    #   DEBUG: 1
+    #   SECRET_KEY: django-insecure-=jv8f-b_8uv8nqr!n_p30zqyf3zur$ex_v81elysd5possu6kx
+    #   DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
+    #   POSTGRES__ENGINE: django.db.backends.postgresql
+    #   POSTGRES__DATABASE: moneycollect 
+    #   POSTGRES__USER: postgres
+    #   POSTGRES__PASSWORD: postgres
+    #   POSTGRES__HOST: db
+    #   POSTGRES__PORT: 5432
+    #   DATABASE: postgres
+
+    depends_on:                         # Сервиса web будет запущен, если сервис db заработал
+      - redis
+      - db  #: condition: service_healthy
+
+  celery:
+    build: ./money_collect
+    command: celery -A money_collect worker -l info -P gevent
+    depends_on:
+      - redis
+      - db
+    env_file:                             # переменные окружения из файла ".env.dev"
+      - ./.env.dev
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0       # адрес брокера сообщений, который используется Celery для управления очередями
+      CELERY_RESULT_BACKEND: redis://redis:6379/0   # адрес для хранения результатов задач
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mydatabase
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: moneycollect
+      # POSTGRES_PORT: 5432             # 5432:5432 порты серверов postgres хоста и контейнера по-умолчанию
+    # ports:
+    #   - 5432:5432                     # ДОБАВЛЕНО: для внешнего подключения (pgAdmin)
+
+    # healthcheck:                        # Проверка рабочего состояния сервиса db 5 раз с интервалом 10 сек. 
+    #   test: ["CMD-SHELL", "pg_isready -U postgres"]
+    #   interval: 10s
+    #   timeout: 5s                       # После этого попытки запуска сервиса web прекратятся.
+    #   retries: 5
+
+# Том, в котором сохраняются данные на диске даже после остановки или удаления контейнеров
+# Для Docker-desktop по умолчанию C:\ProgramData\docker\
+volumes:
+  postgres_data:
+  redis_data:
