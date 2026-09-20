@@ -35,29 +35,31 @@ wait_for_postgres() {                           # Функция ожидани�
     if [[ "$DATABASE" == "postgres" ]]; then    # Если база данных PostgreSQL,
         echo "Ожидание PostgreSQL..."           # то выводится сообщение.
         # Пока не подключится к postgresql-client, идёт цикл. с паузой 1 сек.
-        while ! pg_isready -h $SQL_HOST -U $SQL_USER; do                 # Если postgresql-client установлен в Dockerfile
+        while ! PGPASSWORD="$SQL_PASSWORD" pg_isready -h $SQL_HOST -U $SQL_USER; do   # Если postgresql-client установлен в Dockerfile
         # while ! curl --silent --head --fail http://$SQL_HOST:5432; do   # Если curl установлен в Dockerfile
-        # while ! nc -z $SQL_HOST 5432; do                                # Если postgresql-client, curl не установлены
+        # while ! nc -z $SQL_HOST 5432; do                                # Если postgresql-client и curl не установлены
             sleep 1
             echo "Ожидание PostgreSQL..."                                   # Отладочный вывод в консоли Docker
-            echo "POSTGRES_HOST: "$SQL_HOST, "POSTGRES_PORT: "$SQL_PORT     # Отладочный вывод в консоли Docker
+            echo "POSTGRES_HOST: $SQL_HOST, POSTGRES_PORT: $SQL_PORT"     # Отладочный вывод в консоли Docker
         done
-        echo "POSTGRES_HOST: "$SQL_HOST, "POSTGRES_PORT: "$SQL_PORT         # Отладочный вывод в консоли Docker
+        echo "POSTGRES_HOST: $SQL_HOST, POSTGRES_PORT: $SQL_PORT"         # Отладочный вывод в консоли Docker
         echo "PostgreSQL готов"
     fi
 }
 
 # Функция проверки наличия и создания пустой базы данных в случае отсутствия.
 create_db() {                             
-    echo "Проверка наличия базы данных " $SQL_DATABASE
-    if PGPASSWORD="$SQL_PASSWORD" psql -h "$SQL_HOST" -U "$SQL_USER" -c "SELECT 1 FROM pg_database WHERE datname = '$SQL_DATABASE'" | grep -q 1; then
-        echo "База данных ", $SQL_DATABASE, " уже существует"
+    echo "Проверка наличия базы данных $SQL_DATABASE"
+    if PGPASSWORD="$SQL_PASSWORD" psql -h "$SQL_HOST" -U "$SQL_USER" -tAc "SELECT 1 FROM pg_database WHERE datname = '$SQL_DATABASE'" | grep -q 1; then
+        echo "База данных $SQL_DATABASE уже существует"
     else
-        PGPASSWORD="$SQL_PASSWORD" psql -h "$SQL_HOST" -U "$SQL_USER" -c "CREATE DATABASE '$SQL_DATABASE'"
+        # Чтобы в имени базы допустить спецсимволы,
+        # используем двойные кавычки (экранируем \) в SQL-запросе "CREATE DATABASE \"$SQL_DATABASE\"
+        PGPASSWORD="$SQL_PASSWORD" psql -h "$SQL_HOST" -U "$SQL_USER" -c "CREATE DATABASE \"$SQL_DATABASE\""
         if [ $? -eq 0 ]; then
-            echo "База данных ", $SQL_DATABASE, " успешно создана"
+            echo "База данных $SQL_DATABASE успешно создана"
         else
-            echo "Ошибка создания базы данных ", $SQL_DATABASE
+            echo "Ошибка создания базы данных $SQL_DATABASE"
             exit 1
         fi
     fi
