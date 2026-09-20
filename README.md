@@ -908,6 +908,16 @@ PS C:\Users\EvgenyMINI_S> docker exec -it aeb2bba2939e bash -c "python /usr/src/
 PS C:\Users\EvgenyMINI_S> docker exec -it aeb2bba2939e bash -c "python /usr/src/money_collect/manage.py migrate"
 PS C:\Users\EvgenyMINI_S> docker exec -it aeb2bba2939e bash -c "python /usr/src/money_collect/manage.py fill_mockdataSQL"
 
+
+Вариант команд через docker-compose, чтобы не использовать id web-контейнера:
+PS C:\Users\EvgenyMINI_S> docker-compose exec  web python /usr/src/money_collect/manage.py createsuperuser
+Тестовый суперюзер admin/admin и соглашаемся на простой пароль
+
+PS C:\Users\EvgenyMINI_S> docker-compose exec  web python /usr/src/money_collect/manage.py makemigrations
+PS C:\Users\EvgenyMINI_S> docker-compose exec  web python /usr/src/money_collect/manage.py migrate
+PS C:\Users\EvgenyMINI_S> docker-compose exec  web python /usr/src/money_collect/manage.py fill_mockdataSQL
+
+
 # ДПОПЛНИТЕЛЬНЫЕ ФИЧИ ПРОЕКТА MONEYCOLLECT
 
 # Django Extensions
