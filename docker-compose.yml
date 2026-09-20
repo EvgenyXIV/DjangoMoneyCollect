@@ -19,32 +19,34 @@ services:
     volumes:                              # Синхронизируемые тома на диске и в контейнере для этого сервиса
       - ./money_collect/:/usr/src/money_collect
     ports:                                # Сопоставление портов хоста и контейнера
-      - 8000:8000
+      - "8000:8000"
     env_file:                             # переменные окружения из файла ".env.dev"
       - ./.env.dev
     
     environment:                        # переменные окружения в явном виде
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-      # DATABASE_URL: postgresql://postgres:postgres@db:5432/mydatabase
-    #   DEBUG: 1
-    #   SECRET_KEY: django-insecure-=jv8f-b_8uv8nqr!n_p30zqyf3zur$ex_v81elysd5possu6kx
-    #   DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
-    #   POSTGRES__ENGINE: django.db.backends.postgresql
-    #   POSTGRES__DATABASE: moneycollect 
-    #   POSTGRES__USER: postgres
-    #   POSTGRES__PASSWORD: postgres
-    #   POSTGRES__HOST: db
-    #   POSTGRES__PORT: 5432
-    #   DATABASE: postgres
+      #   DATABASE_URL: postgresql://postgres:postgres@db:5432/mydatabase
+      #   DEBUG: 1
+      #   SECRET_KEY: django-insecure-=jv8f-b_8uv8nqr!n_p30zqyf3zur$ex_v81elysd5possu6kx
+      #   DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
+      #   POSTGRES__ENGINE: django.db.backends.postgresql
+      #   POSTGRES__DATABASE: moneycollect 
+      #   POSTGRES__USER: postgres
+      #   POSTGRES__PASSWORD: postgres
+      #   POSTGRES__HOST: db
+      #   POSTGRES__PORT: 5432
+      #   DATABASE: postgres
 
     depends_on:                         # Сервиса web будет запущен, если сервис db заработал
       - redis
-      - db  #: condition: service_healthy
+      - db                              #: condition: service_healthy
 
   celery:
     build: ./money_collect
     command: celery -A money_collect worker -l info -P gevent
+    volumes:                              # Синхронизируемые тома на диске и в контейнере для этого сервиса
+      - ./money_collect/:/usr/src/money_collect
     depends_on:
       - redis
       - db
@@ -53,7 +55,8 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis:6379/0       # адрес брокера сообщений, который используется Celery для управления очередями
       CELERY_RESULT_BACKEND: redis://redis:6379/0   # адрес для хранения результатов задач
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/mydatabase
+      # DATABASE_URL: postgresql://postgres:postgres@db:5432/moneycollect # Это лишняя настройка, т.к. настройки БД
+                                                                        # указаны в settings.py и берутся оттуда
 
   db:
     image: postgres:15
@@ -64,8 +67,9 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: moneycollect
       # POSTGRES_PORT: 5432             # 5432:5432 порты серверов postgres хоста и контейнера по-умолчанию
-    # ports:
-    #   - 5432:5432                     # ДОБАВЛЕНО: для внешнего подключения (pgAdmin)
+#     Блок ports закомментирован — база недоступна извне, только внутри сети Docker
+#    ports:
+#      - "5432:5432"                     # ДОБАВЛЕНО: для внешнего подключения (pgAdmin)
 
     # healthcheck:                        # Проверка рабочего состояния сервиса db 5 раз с интервалом 10 сек. 
     #   test: ["CMD-SHELL", "pg_isready -U postgres"]

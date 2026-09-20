@@ -30,12 +30,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-n=kzx^i38odv4$y&ysu8c2qirkg@bg0^9i@u1%^ku&7@4rjw%$"
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-n=kzx^i38odv4$$y&ysu8c2qirkg@bg0^9i@u1%^ku&7@4rjw%$$")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split()
 
 # Application definition
 
@@ -94,13 +94,15 @@ WSGI_APPLICATION = "money_collect.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "moneycollect",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        # "HOST": "localhost",
-        # "HOST": "db",                           # Имя контейнера с БД db, использовать вместо localhost при развертывании в Docker
-        "PORT": "5432",
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.postgresql"),
+        "NAME": os.environ.get("SQL_DATABASE", "moneycollect"),
+        "USER": os.environ.get("SQL_USER", "postgres"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "postgres"),
+        "HOST": os.environ.get("SQL_HOST", "localhost"),    # При запуске локально в Windows будет исп. по умолчанию localhost,
+                                                            # так как .env.dev подгружается позже через Config(RepositoryEnv(...))
+        "PORT": os.environ.get("SQL_PORT", "5432"),
+        # "HOST": "db", Имя контейнера с БД db, указано в .env.dev и будет использовано при развёртывании в Docker
+
     }
 }
 
@@ -199,8 +201,8 @@ LOGGING = {
 }
 
 # Настройки для CELERY
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -228,9 +230,9 @@ if DEBUG:
 
 # Настройки почтового list.ru сервера для отправки уведомлений
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.list.ru"  # SMTP сервер list.ru
-EMAIL_PORT = 587  # Порт для подключения
-EMAIL_USE_TLS = True  # Использование TLS шифрования
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.list.ru")  # SMTP сервер list.ru
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))  # Порт для подключения
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")  # Использование TLS шифрования
 EMAIL_USE_SSL = False  # SSL не используется, так как порт 587 работает с TLS
 # Если проект развернут локально
 if DATABASES["default"]["HOST"] == "localhost":

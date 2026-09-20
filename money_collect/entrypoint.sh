@@ -66,12 +66,12 @@ create_db() {
 
 # Обработка SQLite
 if [[ "$DATABASE" == "sqlite" ]]; then  # Если база данных SQLite,
-    DB_PATH = "./db.sqlite3"
-    if [[ ! -f DB_PATH ]]; then      # Если по адресу ($DB_PATH) файл (-f) базы данных не (!) существует,
-        touch DB_PATH                # то создаётся пустой файл db.sqlite3.
-        chmod 666 DB_PATH            # и его права на чтение и запись (666) для всех пользователей.
+    DB_PATH="./db.sqlite3"
+    if [[ ! -f $DB_PATH ]]; then      # Если по адресу ($DB_PATH) файл (-f) базы данных не (!) существует,
+        touch $DB_PATH                # то создаётся пустой файл db.sqlite3.
+        chmod 666 $DB_PATH            # и его права на чтение и запись (666) для всех пользователей.
     fi
-Обработка PostgreSQL
+# Обработка PostgreSQL
 elif [[ "$DATABASE" == "postgres" ]]; then  # Если база данных PostgreSQL,
     wait_for_postgres                       # Выполняется функция ожидания PostgreSQL.
     create_db                         # Выполняется функция проверки наличия и создания пустой базы данных в случае отсутствия.
